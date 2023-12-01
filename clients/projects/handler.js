@@ -19,7 +19,7 @@ function createProject() {
         projectId,
         name: chance.word(),
         description: chance.sentence(),
-        deadline: chance.date({ year: 2023 }).toISOString()
+        deadline: chance.date({string: true})
     };
 }
 
@@ -45,7 +45,7 @@ function startProjectProcess() {
         const project = createProject();
         console.log(`[Project Manager] Creating Project '${project.name}' with ID: ${project.projectId}`);
         socketClient.publish('new-project', project);
-    }, 15000);
+    }, 30000);
 }
 
 module.exports = { startProjectProcess };

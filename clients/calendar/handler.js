@@ -6,46 +6,44 @@ require('dotenv').config();
 const PORT = process.env.PORT || 5002;
 const serverUrl = `http://localhost:${PORT}/lifeOS`;
 
-class CalendarManager {
-    constructor() {
-        this.deadlines = {}; 
-        this.socketClient = new SocketClient(calendarName, serverUrl);
-        this.subscribeToEvents();
+function startCalendarProcess() {
+    const deadlines = {};
+
+    const socketClient = new SocketClient(calendarName, serverUrl);
+
+    function addDeadline(type, id, deadline) {
+        deadlines[id] = deadline;
+        console.log(`[Calendar Manager] ${type} Deadline for ID ${id} set for ${deadline}`);
     }
 
-    addDeadline(id, deadline) {
-        this.deadlines[id] = deadline;
-        console.log(`[Calendar Manager] Deadline for ID ${id} set for ${deadline}`);
-    }
-
-    removeDeadline(id) {
-        if (this.deadlines[id]) {
-            delete this.deadlines[id];
-            console.log(`[Calendar Manager] Deadline removed for ID ${id}`);
+    function removeDeadline(type, id) {
+        if (deadlines[id]) {
+            delete deadlines[id];
+            console.log(`[Calendar Manager] ${type} Deadline removed for ID ${id}`);
         }
     }
 
-    subscribeToEvents() {
-        this.socketClient.subscribe('new-project', (payload) => {
-            this.addDeadline(payload.projectId, payload.deadline);
-        });
+    socketClient.subscribe('new-project', (payload) => {
+        addDeadline('Project', payload.projectId, payload.deadline);
+    });
 
-        this.socketClient.subscribe('new-task', (payload) => {
-            this.addDeadline(payload.taskId, payload.dueDate);
-        });
+    socketClient.subscribe('new-task', (payload) => {
+        if (payload.deadline) {
+            addDeadline('Task', payload.taskId, payload.deadline);
+        } else {
+            console.log(`[Calendar Manager] Received new task without due date: ID - ${payload.taskId}`);
+        }
+    });
 
-        this.socketClient.subscribe('task-completed', (payload) => {
-            this.removeDeadline(payload.taskId);
-        });
+    socketClient.subscribe('task-completed', (payload) => {
+        removeDeadline('Task', payload.taskId);
+    });
 
-        this.socketClient.subscribe('project-completed', (payload) => {
-            this.removeDeadline(payload.projectId);
-        });
-    }
-}
+    socketClient.subscribe('project-completed', (payload) => {
+        removeDeadline('Project', payload.projectId);
+    });
 
-function startCalendarProcess() {
-    new CalendarManager();
+    console.log('[Calendar Manager] Started');
 }
 
 module.exports = { startCalendarProcess };

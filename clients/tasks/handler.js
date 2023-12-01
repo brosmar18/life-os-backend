@@ -19,14 +19,17 @@ function createTask(projectId) {
         projectId,
         taskId,
         taskName: chance.word(),
-        dueDate: chance.date({ year: 2023 }).toISOString()
+        deadline: chance.date({string: true})
     };
 }
 
+
 function startTasksProcess() {
     const socketClient = new SocketClient(taskManagerName, serverUrl);
+    // Verify the serverUrl includes the namespace
+    console.log(`Connecting to server at: ${serverUrl}`);
 
-    
+
     socketClient.subscribe('new-project', (payload) => {
         projectIds.push(payload.projectId);
         console.log(`Task Manager: New Project ID ${payload.projectId} added to the list`);
@@ -35,7 +38,7 @@ function startTasksProcess() {
     setInterval(() => {
 
         if (projectIds.length > 0) {
-            const projectId = projectIds[0]; 
+            const projectId = projectIds[0];
             const task = createTask(projectId);
             console.log(`Task Manager: Adding new task ID: ${task.taskId} to project ID ${projectId}`);
             socketClient.publish('new-task', task);
@@ -43,9 +46,9 @@ function startTasksProcess() {
             setTimeout(() => {
                 console.log(`Task Manager: Marking task ID ${task.taskId} in project ID ${projectId} as completed!`);
                 socketClient.publish('task-completed', { ...task, status: 'completed' });
-            }, 3000);
+            }, 10000);
         }
-    }, 10000);
+    }, 20000);
 }
 
 module.exports = { startTasksProcess };

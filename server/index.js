@@ -1,3 +1,4 @@
+// server/index.js
 'use strict';
 
 const { Server } = require('socket.io');
@@ -18,54 +19,43 @@ lifeOS.on('connection', (socket) => {
         socket.join(room);
     });
 
-    // Project created
     socket.on('new-project', (payload) => {
         messageQueue.addMessage(payload.projectId, 'new-project', payload);
         console.log(`[Server] New Project Created: ID - ${payload.projectId}, Name - ${payload.name}`);
-        socket.broadcast.emit('new-project', payload);
-
-        // Initialize task tracking for the new project
         projectTasks[payload.projectId] = { total: 0, completed: 0 };
+        lifeOS.emit('new-project', payload); 
     });
 
-    // Task added to project
     socket.on('new-task', (payload) => {
         messageQueue.addMessage(payload.projectId, 'new-task', payload);
         console.log(`[Server] New Task Added: ID - ${payload.taskId}, Name - ${payload.taskName}, to Project ID - ${payload.projectId}`);
-        socket.to(payload.projectId).emit('new-task', payload);
-
         if (projectTasks[payload.projectId]) {
             projectTasks[payload.projectId].total++;
         }
+        lifeOS.emit('new-task', payload); 
     });
 
-    // Task marked as completed
     socket.on('task-completed', (payload) => {
         messageQueue.addMessage(payload.projectId, 'task-completed', payload);
         console.log(`[Server] Task Completed: ID - ${payload.taskId}, Name - ${payload.taskName}, in Project ID - ${payload.projectId}`);
-        socket.to(payload.projectId).emit('task-completed', payload);
-
         if (projectTasks[payload.projectId]) {
             projectTasks[payload.projectId].completed++;
-            if (projectTasks[payload.projectId].completed === projectTasks[payload.projectId].total) {
-                console.log(`[Server] Project Completed: ID - ${payload.projectId}`);
-                lifeOS.emit('project-completed', { projectId: payload.projectId });
-            }
+            checkProjectCompletion(payload.projectId);
         }
     });
 
-    // Schedule an event
-    socket.on('new-event', (payload) => {
-        messageQueue.addMessage(payload.projectId, 'new-event', payload);
-        console.log(`[Server] New Event Scheduled: ID - ${payload.eventId}, for Project ID - ${payload.projectId}`);
-        socket.to(payload.projectId).emit('new-event', payload);
-    });
+    function checkProjectCompletion(projectId) {
+        if (projectTasks[projectId].completed === projectTasks[projectId].total) {
+            console.log(`[Server] Project Completed: ID - ${projectId}`);
+            lifeOS.emit('project-completed', { projectId: projectId }); 
+        }
+    }
 
-    socket.on('received', ({ clientId, event, messageId}) => {
+    socket.on('received', ({ clientId, event, messageId }) => {
         messageQueue.acknowledgeMessage(clientId, event, messageId);
     });
 
-    socket.on('getAll', ({ clientId, event}) => {
+    socket.on('getAll', ({ clientId, event }) => {
         const messages = messageQueue.getMessages(clientId, event);
         messages.forEach((message) => {
             socket.emit(event, message);
