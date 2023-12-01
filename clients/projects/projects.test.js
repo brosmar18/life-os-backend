@@ -1,3 +1,6 @@
+const { startProjectProcess } = require('./handler');
+const io = require('socket.io-client');
+
 jest.mock('socket.io-client', () => {
     return jest.fn().mockImplementation(() => {
       return {
@@ -10,8 +13,6 @@ jest.mock('socket.io-client', () => {
     });
 });
 
-const { startProjectProcess } = require('./handler');
-const io = require('socket.io-client');
 
 describe('Project Manager Handler', () => {
     let mockSocket;
