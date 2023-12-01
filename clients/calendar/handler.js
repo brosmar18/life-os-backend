@@ -15,13 +15,13 @@ class CalendarManager {
 
     addDeadline(id, deadline) {
         this.deadlines[id] = deadline;
-        console.log(`Calendar Manager: Deadline for ${id} set for ${deadline}`);
+        console.log(`[Calendar Manager] Deadline for ID ${id} set for ${deadline}`);
     }
 
     removeDeadline(id) {
         if (this.deadlines[id]) {
             delete this.deadlines[id];
-            console.log(`Calendar Manager: Deadline removed for ${id}`);
+            console.log(`[Calendar Manager] Deadline removed for ID ${id}`);
         }
     }
 

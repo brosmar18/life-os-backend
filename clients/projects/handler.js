@@ -9,9 +9,14 @@ require('dotenv').config();
 const PORT = process.env.PORT || 5002;
 const serverUrl = `http://localhost:${PORT}/lifeOS`;
 
+let projectCounter = 0; // counter to identify each project. 
+
 function createProject() {
+    projectCounter++;
+    const projectId = `P-${projectCounter}`;
+
     return {
-        projectId: chance.guid(),
+        projectId,
         name: chance.word(),
         description: chance.sentence(),
         deadline: chance.date({ year: 2023 }).toISOString()
@@ -38,7 +43,7 @@ function startProjectProcess() {
     // Creates new project at setInterval 
     setInterval(() => {
         const project = createProject();
-        console.log(`Project Manager: Creating new project ID: ${project.projectId}`);
+        console.log(`[Project Manager] Creating Project '${project.name}' with ID: ${project.projectId}`);
         socketClient.publish('new-project', project);
     }, 15000);
 }

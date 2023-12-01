@@ -8,20 +8,20 @@ const lifeOS = server.of('/lifeOS');
 const Queue = require('./lib/queue');
 const messageQueue = new Queue();
 
-const projectTasks = {}; 
+const projectTasks = {};
 
 lifeOS.on('connection', (socket) => {
-    console.log(`Client Connected: ${socket.id}`);
+    console.log(`[Server] Client Connected: Socket ID - ${socket.id}`);
 
     socket.on('join', (room) => {
-        console.log(`Socket ${socket.id} joined room ${room}`);
+        console.log(`[Server] Socket ${socket.id} joined room: ${room}`);
         socket.join(room);
     });
 
     // Project created
     socket.on('new-project', (payload) => {
         messageQueue.addMessage(payload.projectId, 'new-project', payload);
-        console.log(`New Project Created: Project ID ${payload.projectId}`);
+        console.log(`[Server] New Project Created: ID - ${payload.projectId}, Name - ${payload.name}`);
         socket.broadcast.emit('new-project', payload);
 
         // Initialize task tracking for the new project
@@ -31,10 +31,9 @@ lifeOS.on('connection', (socket) => {
     // Task added to project
     socket.on('new-task', (payload) => {
         messageQueue.addMessage(payload.projectId, 'new-task', payload);
-        console.log(`New Task Added: Task ID ${payload.taskId} in Project ID ${payload.projectId}`);
+        console.log(`[Server] New Task Added: ID - ${payload.taskId}, Name - ${payload.taskName}, to Project ID - ${payload.projectId}`);
         socket.to(payload.projectId).emit('new-task', payload);
 
-        
         if (projectTasks[payload.projectId]) {
             projectTasks[payload.projectId].total++;
         }
@@ -43,14 +42,13 @@ lifeOS.on('connection', (socket) => {
     // Task marked as completed
     socket.on('task-completed', (payload) => {
         messageQueue.addMessage(payload.projectId, 'task-completed', payload);
-        console.log(`Task Completed: Task ID ${payload.taskId} in Project ID ${payload.projectId}`);
+        console.log(`[Server] Task Completed: ID - ${payload.taskId}, Name - ${payload.taskName}, in Project ID - ${payload.projectId}`);
         socket.to(payload.projectId).emit('task-completed', payload);
 
-       
         if (projectTasks[payload.projectId]) {
             projectTasks[payload.projectId].completed++;
             if (projectTasks[payload.projectId].completed === projectTasks[payload.projectId].total) {
-                console.log(`Project Completed: Project ID ${payload.projectId}`);
+                console.log(`[Server] Project Completed: ID - ${payload.projectId}`);
                 lifeOS.emit('project-completed', { projectId: payload.projectId });
             }
         }
@@ -59,7 +57,7 @@ lifeOS.on('connection', (socket) => {
     // Schedule an event
     socket.on('new-event', (payload) => {
         messageQueue.addMessage(payload.projectId, 'new-event', payload);
-        console.log(`New Event Scheduled: Event ID ${payload.eventId} for Project ID ${payload.projectId}`);
+        console.log(`[Server] New Event Scheduled: ID - ${payload.eventId}, for Project ID - ${payload.projectId}`);
         socket.to(payload.projectId).emit('new-event', payload);
     });
 
@@ -76,5 +74,5 @@ lifeOS.on('connection', (socket) => {
 });
 
 server.listen(PORT, () => {
-    console.log(`Life OS Server is up and running on port ${PORT}`);
+    console.log(`[Server] Life OS Server is up and running on port ${PORT}`);
 });

@@ -10,11 +10,14 @@ const PORT = process.env.PORT || 5002;
 const serverUrl = `http://localhost:${PORT}/lifeOS`;
 
 let projectIds = [];
+let taskCounter = 0;
 
 function createTask(projectId) {
+    taskCounter++
+    const taskId = `T-${taskCounter}`;
     return {
         projectId,
-        taskId: chance.guid(),
+        taskId,
         taskName: chance.word(),
         dueDate: chance.date({ year: 2023 }).toISOString()
     };
