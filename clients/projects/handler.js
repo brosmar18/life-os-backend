@@ -25,7 +25,7 @@ function startProjectProcess() {
         const project = createProject();
         console.log(`Project Manager: Creating new project ID: ${project.projectId}`);
         socketClient.publish('new-project', project);
-    }, 5000);
+    }, 30000);
 }
 
 module.exports = {startProjectProcess};
